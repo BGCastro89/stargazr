@@ -3,12 +3,13 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 import requests
 import json
+import os
 
 class LocationViewSet(viewsets.ModelViewSet):
 
 def weather(request):
     root_uri = 'https://api.darksky.net'
-    api = '0123456789abcdef9876543210fedcba'
+    api = os.environ.get('DARK_SKY_API_KEY', '')
     action = 'forecast'
     lat = request.GET['lat']
     lng = request.GET['lng']
