@@ -5,8 +5,6 @@ import requests
 import json
 import os
 
-class LocationViewSet(viewsets.ModelViewSet):
-
 def weather(request):
     root_uri = 'https://api.darksky.net'
     api = os.environ.get('DARK_SKY_API_KEY', '')
