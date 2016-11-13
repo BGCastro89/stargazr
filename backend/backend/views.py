@@ -1,5 +1,6 @@
 import requests
 import os
+import math
 
 from django.http import JsonResponse
 from PIL import Image
@@ -29,6 +30,25 @@ def distance(request):
     data = response.json()
     return JsonResponse(data)
 
+def gudermannian(x):
+    return 2*math.atan(math.exp(x)) - math.pi/2
+
+def inv_gudermannian(y):
+    return math.log(math.tan((y + math.pi/2) / 2))
+
+def get_lat_lng_tile(lat, lng, zoom):
+    """convert lat/lng to Google-style Mercator tile coordinate (x, y)
+    at the given zoom level"""
+
+    lat_rad = lat * math.pi / 180.0
+    # "map-centric" latitude, in radians:
+    lat_rad = inv_gudermannian(lat_rad)
+
+    x = 2**zoom * (lng + 180.0) / 360.0
+    y = 2**zoom * (math.pi - lat_rad) / (2 * math.pi)
+
+    return (x, y)
+
 def brightness(request):
     curr_dir_path = os.path.dirname(os.path.realpath(__file__))
     tiles_dir_path = os.path.join(curr_dir_path, 'tiles')
@@ -44,36 +64,10 @@ def brightness(request):
     # Latitudes start at -65.00, end at 74.99
     lat_pixel_res = 140.0/(1024*34)
     long_pixel_res = 360.0/(1024*64)
-    # 63 tile longitudinal grids
-    for i in xrange(0, 64):
-        # 47 tile latitude grids
-        for j in xrange(0, 34):
-            # Latitudes start at -65.00, end at 74.99
-            c_lat = -65.0041666666667 + j * (1024 * lat_pixel_res)
-            # Longitudes start at -179.99, end at 179.99
-            c_lon = -179.995833333333 + i * (1024 * long_pixel_res)
-            min_lat = c_lat - (512 * lat_pixel_res)
-            max_lat = c_lat + (512 * lat_pixel_res)
-            min_lon = c_lon - (512 * long_pixel_res)
-            max_lon = c_lon + (512 * long_pixel_res)
 
-            print "bin lat: %s" % j
-            print "bin long: %s" % i
-            print "c_lat: %s" % c_lat
-            print "c_lon: %s" % c_lon
-            print "min_lat: %s" % min_lat
-            print "max_lat: %s" % max_lat
-            print "min_lon: %s" % min_lon
-            print "max_lon: %s" % max_lon
-            print ""
-            if min_lat <= lat and lat <= max_lat and min_lon <= lon and lon <= max_lon:
-                bin_lat = j
-                bin_lon = i
-                found = True
-                break
-
-        if found:
-            break
+    i, j = get_lat_lng_tile(lat, lon, 6)
+    i = int(i)
+    j = int(j)
 
     c_lat = -65.0041666666667 + (j * (1024 * lat_pixel_res))
     c_lon = -179.995833333333 + (i * (1024 * long_pixel_res))
@@ -81,8 +75,8 @@ def brightness(request):
     max_lat = c_lat + (512 * lat_pixel_res)
     min_lon = c_lon - (512 * long_pixel_res)
     max_lon = c_lon + (512 * long_pixel_res)
-    pixel_x = int((lon - min_lon) / lat_pixel_res)
-    pixel_y = int((lat - min_lat) / long_pixel_res)
+    pixel_x = int((lon - min_lon) / long_pixel_res)
+    pixel_y = int((lat - min_lat) / lat_pixel_res)
 
     pixel_x = max(0, min(pixel_x, 1023))
     pixel_y = max(0, min(pixel_y, 1023))
