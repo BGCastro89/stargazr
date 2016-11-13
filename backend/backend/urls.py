@@ -20,5 +20,6 @@ import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^weather/$', views.weather)
+    url(r'^weather$', views.weather),
+    url(r'^distance$', views.distance)
 ]
