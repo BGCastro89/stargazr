@@ -66,20 +66,16 @@ def brightness(request):
     long_pixel_res = 360.0/(1024*64)
 
     i, j = get_lat_lng_tile(lat, lon, 6)
+    i_pixel_percent = i%1
+    j_pixel_percent = j%1
     i = int(i)
     j = int(j)
 
-    c_lat = -65.0041666666667 + (j * (1024 * lat_pixel_res))
-    c_lon = -179.995833333333 + (i * (1024 * long_pixel_res))
-    min_lat = c_lat - (512 * lat_pixel_res)
-    max_lat = c_lat + (512 * lat_pixel_res)
-    min_lon = c_lon - (512 * long_pixel_res)
-    max_lon = c_lon + (512 * long_pixel_res)
-    pixel_x = int((lon - min_lon) / long_pixel_res)
-    pixel_y = int((lat - min_lat) / lat_pixel_res)
+    pixel_x = i_pixel_percent * 1024
+    pixel_y = j_pixel_percent * 1024
 
-    pixel_x = max(0, min(pixel_x, 1023))
-    pixel_y = max(0, min(pixel_y, 1023))
+    pixel_x = int(max(0, min(pixel_x, 1023)))
+    pixel_y = int(max(0, min(pixel_y, 1023)))
 
     image_name = "tile_6_%d_%d.png" % (i, j)
 
