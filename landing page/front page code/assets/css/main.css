@@ -1821,9 +1821,8 @@
 		padding: 0 2.2em;
 		text-align: center;
 		text-decoration: none;
-		text-transform: uppercase;
+		text-transform: inherit;
 		white-space: normal;
-  	float:left;
 	}
 
 		input[type="submit"]:hover,
@@ -1991,7 +1990,7 @@
 
 		.feature-grid .feature {
 			display: inline-block;
-			float: left;
+			float: center;
 			margin-bottom: 3em;
 			width: 50%;
 		}
