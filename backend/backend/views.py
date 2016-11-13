@@ -1,9 +1,13 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
+
 import requests
 import json
 import os
+
+renderer_classes = (JSONRenderer, )
 
 def weather(request):
     root_uri = 'https://api.darksky.net'
@@ -14,4 +18,5 @@ def weather(request):
     lat_lng = ','.join((lat, lng))
     uri = '/'.join((root_uri, action, api, lat_lng))
     response = requests.get(uri)
-    return Response(response.json())
+    data=response.json()
+    return Response(data)

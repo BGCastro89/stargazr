@@ -25,7 +25,7 @@ SECRET_KEY = 'fp_mkabs_m901g$c-#ar!=rc(k51z1u$#5gw*p14fog9y4m97t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['yehhsrujdu.localtunnel.me']
 
 
 # Application definition
