@@ -49,6 +49,26 @@ def get_lat_lng_tile(lat, lng, zoom):
 
     return (x, y)
 
+pixel_lightpoll_table = {
+    "(0, 0, 0)": 0.005,               #"0.00 - 0.01",
+    "(35, 35, 35)": 0.035,            #"0.01 - 0.06",
+    "(70, 70, 70)": 0.085,            #"0.06 - 0.11",
+    "(0, 0, 153)": 0.15,            #"0.11 - 0.19",
+    "(0, 0, 255)": 0.26,            #"0.19 - 0.33",
+    "(0, 153, 0)": 0.455,           #"0.33 - 0.58",
+    "(0, 255, 0)": 0.79,          #"0.58 - 1.00",
+    "(191, 191, 0)": 1.365,          #"1.00 - 1.73",
+    "(255, 255, 0)": 2.365,          #"1.73 - 3.00",
+    "(217, 109, 0)": 4.1,           #"3.00 - 5.20",
+    "(255, 128, 0)": 7.1,          #"5.20 - 9.00",
+    "(204, 0, 0)": 12.295,           #"9.00 - 15.59",
+    "(255, 0, 0)": 21.295,           #"15.59 - 27.00",
+    "(191, 191, 191)": 36.895,         #"27.0 - 46.77",
+    "(255, 255, 255)": 47.77        #"46.77+"
+}
+
+
+
 def brightness(request):
     curr_dir_path = os.path.dirname(os.path.realpath(__file__))
     tiles_dir_path = os.path.join(curr_dir_path, 'tiles')
@@ -84,11 +104,70 @@ def brightness(request):
         print "Trying to open image: %s" % image_path
         image = Image.open(image_path)
         print "Looking up pixel ({},{})".format(pixel_x, pixel_y)
-        pixel_value = image.getpixel((pixel_x, pixel_y))
-        print image_name, pixel_value
+        pixel_value_old = image.getpixel((pixel_x, pixel_y))
+        rgb_img = image.convert("RGB")
+        pix = rgb_img.load()
+        pixel_value = pix[pixel_x, pixel_y]
+        light_poll_ratio = pixel_lightpoll_table[str(pixel_value)]
+        print image_name, pixel_value_old, pixel_value, light_poll_ratio
+    except KeyError as e:
+        print "Error, color does not match any known in key"
+        light_poll_ratio = "N/A"
     except IndexError as e:
         print "Error: %s" % e
     except IOError as e:
-        print "Error: There's no coverage for %s" % image_name 
+        print "Error: There's no coverage for %s" % image_name
 
-    return JsonResponse({'brightness': pixel_value})
+    return JsonResponse({'brightness': light_poll_ratio})
+
+#Test for LP accuracy using points fromm Downtown LA to Ocean
+if __name__ == "__main__":
+    brightness(32.289454513392876, -120.41290283203125)
+    print "1\tBlack   \t(0,0,0)           0.00 - 0.01   \n"
+    brightness(32.939538898778416, -119.66583251953125)
+    print "2\tDk Gray \t(35,35,35)        0.01 - 0.06   \n"
+    brightness(33.06852769197118, -119.20989990234375)
+    print "2\tLt Gray \t(70,70,70)        0.06 - 0.11   \n"
+    brightness(33.23868752757414, -119.102783203125)
+    print "3\tDk Blue \t(0,0,153)        0.11 - 0.19\n"
+    brightness(33.348884792201694, -118.98468017578125)
+    print "3\tLt Blue \t(0,0,255)        0.19 - 0.33   \n"
+    brightness(33.48414472606364, -118.88580322265625)
+    print "4\tDk Green\t(0,153,0)       0.33 - 0.58   \n"
+    brightness(33.55741786324217, -118.75396728515625)
+    print "4\tMd Green\t(0,255,0)      0.58 - 1.00   \n"
+    brightness(33.80653802509606, -118.81988525390625)
+    print "4\tGreen   \t(191,191,0)      1.00 - 1.73   \n"
+    brightness(33.868135032968624, -118.7567138671875)
+    print "4\tYellow  \t(255,255,0)      1.73 - 3.00\n"
+    brightness(33.96842016198477, -118.71551513671875)
+    print "5\tDk Red  \t(217,109,0)       3.00 - 5.20   \n"
+    brightness(34.05493499798558, -118.7017822265625)
+    print "5\tOrange  \t(255,128,0)      5.20 - 9.00 \n"
+    brightness( 34.20953080048952, -118.7841796875)
+    print "6\tRed     \t(204,0,0)       9.00 - 15.59  \n"
+    brightness( 34.12317388304314, -118.53973388671875)
+    print "7\tLt Red  \t(255,0,0)      15.59 - 27.00  \n"
+    brightness( 34.2004447595411, -118.53424072265625)
+    print "8\tDk White\t(191,191,191)     27.0 - 46.77  \n"
+    brightness( 33.95247360616281, -118.223876953125)
+    print "9\tWhite   \t(255,255,255)     47.77+        \n"
+
+
+    #Light Pollution Coloring Key
+    #Bortle Color       RGB                Ratio Artifitial/Natural Darkness + Description
+    # 1     Black       (0,0,0)            0.00 - 0.01      Theoretically darkest sky limited by airglow and starlight
+    # 2     Dk Gray     (26,26,26)         0.01 - 0.06      Gegenschein visible. Zodiacal light annoyingly bright. Rising milkyway confuses some into thinking it's dawn. Limiting magnitude 7.6 to 8.0 for people with exceptional vision. Users of large dobsonian telescopes are very happy. [-ad]
+    # 2     Lt Gray     (54,54,54)         0.06 - 0.11      Faint shadows cast by milkyway visible on white objects. Clouds are black holes in the sky. No light domes. The milky way has faint extentions making it 50 degrees thick. Limiting magntiude 7.1 to 7.5. [-ad]
+    # 3     Dk Blue     (0,20,132)         0.11 - 0.19
+    # 3     Lt Blue     (0,38,249)         0.19 - 0.33      The sky is crowded with stars, extending to the horizon in all directions. In the absence of haze the M.W. can be seen to the horizon. Clouds appear as black silhouettes against the sky. Stars look large and close. [-Richard Berry] Low light domes (10 to 15 degrees) on horizon. M33 easy with averted vision. M15 is naked eye. Milky way shows bulge into Ophiuchus. Limiting magnitude 6.6 to 7.0. [-ad]
+    # 4     Dk Green    (57,129,20)        0.33 - 0.58      a glow in the direction of one or more cities is seen on the horizon. Clouds are bright near the city glow. [-Richard Berry]
+    # 4     Md Green    (108,244,38)       0.58 - 1.00      Zodiacal light seen on best nights. Milkyway shows much dark lane structure with beginnings of faint bulge into Ophiuchus. M33 difficult even when above 50 degrees. Limiting magnitude about 6.2 to 6.5. [-ad]
+    # 4.5   Green       (179,174,30)       1.00 - 1.73      The M.W. is brilliant overhead but cannot be seen near the horizon. Clouds have a greyish glow at the zenith and appear bright in the direction of one or more prominent city glows. [-Richard Berry] Some dark lanes in milkyway but no bulge into Ophiuchus. Washed out milkyway visible near horizon. Zodiacal light very rare. Light domes up to 45 degrees. Limiting magnitude about 5.9 to 6.2. [-ad]
+    # 4.5   Yellow      (255,250,43)       1.73 - 3.00
+    # 5     Dk Red      (190,96,21)        3.00 - 5.20      To a city dweller the M.W. is magnificent, but contrast is markedly reduced, and delicate detail is lost. Limiting magnitude is noticeably reduced. Clouds are bright against the zenith sky. Stars no longer appear large and near. [-Richard Berry] Milkyway washed out at zenith and invisible at horizon. Many light domes. Clouds are brighter than sky. M31 easily visible. Limiting magnitude about 5.6 to 5.9.[-ad]
+    # 5     Orange      (233,117,26)       5.20 - 9.00
+    # 6     Red         (171,34,14)        9.00 - 15.59     M.W. is marginally visible, and only near the zenith. Sky is bright and discoloured near the horizon in the direction of cities. The sky looks dull grey. [-Richard Berry] Milkyway at best very faint at zenith. M31 difficult and indestinct. Sky is grey up to 35 degrees. Limiting magntidue 5.0 to 5.5. [-ad]
+    # 7     Lt Red      (226,46,19)        15.59 - 27.00
+    # 8     Dk White    (177,178,177)      27.0 - 46.77     Entire sky is grayish or brighter. Familliar constellations are missing stars. Fainter constellations are absent. Less than 20 stars visible over 30 degrees elevation in brigher areas. Limiting magntude from 3 to 4.CCD imaging is still possible. But telescopic visual observation is usually limited to the moon, planets, double stars and variable stars. [-ad]
+    # 9     White       (255,255,255)      47.77+           Stars are weak and washed out, and reduced to a few hundred. The sky is bright and discoloured everywhere. [-Richard Berry] Most people don't look up.[-ad]
