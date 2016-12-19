@@ -1,17 +1,5 @@
-=======
-Installation
-=============
+Backend for stargazr
 
-pip install -r requirements.txt
+Gets the light pollution levels at a site by looking up the image that is overlayed a given GPS coordinate on the map, and finds the pixel value (returning the associated light pollution level) for that coordinate.
 
-
-Usage
-======
-
-From within the djlorenz repo root run:
-
-```
-python get_lighting <latitude> <longitude>
-```
-
-Returns the image name within which the lat/lon is contained and the pixel intensity
+Also provides access to API for Dark Sky Weater
