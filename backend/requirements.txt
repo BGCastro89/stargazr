@@ -1,5 +1,5 @@
 Django==1.9.9
-djangorestframework==3.3.2
+djangorestframework==3.9.1
 wsgiref==0.1.2
 requests==2.2.1
 pillow==3.4.2
